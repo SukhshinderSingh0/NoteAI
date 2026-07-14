@@ -15,13 +15,16 @@ connectDB();
 // ── Middleware ────────────────────────────────────────────────────────────────
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
-  .map(s => s.trim());
+  .map(s => s.trim().replace(/\/+$/, ''));
 
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    cb(new Error('Not allowed by CORS'));
+    if (!origin) return cb(null, true);
+    const cleanOrigin = origin.replace(/\/+$/, '');
+    if (allowedOrigins.includes(cleanOrigin) || cleanOrigin.endsWith('.vercel.app')) {
+      return cb(null, true);
+    }
+    cb(new Error(`Not allowed by CORS: ${cleanOrigin}`));
   },
   credentials: true, // allow cookies
 }));
